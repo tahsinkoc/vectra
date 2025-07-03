@@ -3,8 +3,9 @@ import numpy as np
 from api.models.vector import Vector
 from api.schemas.vectors import SearchVector
 from embedding.create_embedding import create_embedding
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from embedding.create_hnsw_index import search_index
+from api.services.api_key_service import confirm_api_key
 
 # async def search_vector(vector: SearchVector):
 #     embedding = create_embedding(vector.metadata)
@@ -20,22 +21,37 @@ from embedding.create_hnsw_index import search_index
 #     result["distance"] = float(distances[0])
 #     return result
 
-async def search_vector(vector: SearchVector):
-    embedding = create_embedding(vector.metadata)
-    labels, distances = search_index(embedding.tolist(), 3)
+async def search_vector(vector: SearchVector, Request: Request):
 
-    label_ids = [int(label) for label in labels]
-    distance_map = {int(label): float(distance) for label, distance in zip(labels, distances)}
+    header = Request.headers.get("API-Key")
+    confirm = confirm_api_key(header)
+    if confirm:
+        embedding = create_embedding(vector.metadata)
+        labels, distances = search_index(embedding.tolist(), 3)
 
-    results = list(db.trips.find({"id": {"$in": label_ids}}, {"_id": 0}))
+        label_ids = [int(label) for label in labels]
+        distance_map = {int(label): float(distance) for label, distance in zip(labels, distances)}
 
-    if not results:
-        raise HTTPException(status_code=404, detail="Trips not found in database.")
+        results = list(db.trips.find({"id": {"$in": label_ids}}, {"_id": 0}))
 
-    for result in results:
-        result["distance"] = distance_map.get(result["id"], None)
+        if not results:
+            raise HTTPException(status_code=404, detail="Trips not found in database.")
 
-    results.sort(key=lambda r: r["distance"])
+        for result in results:
+            result["distance"] = distance_map.get(result["id"], None)
 
-    return results
+        results.sort(key=lambda r: r["distance"])
+
+        return results
+
+
+async def search_vector_response_with_id(vector: SearchVector, Request: Request):
+    header = Request.headers.get("API-Key")
+    confirm = confirm_api_key(header)
+    if confirm:
+        embedding = create_embedding(vector.metadata)
+        labels, distances = search_index(embedding.tolist(), 3)
+        label_ids = [int(label) for label in labels]
+        distance_map = {int(label): float(distance) for label, distance in zip(labels, distances)}
+        return distance_map
 

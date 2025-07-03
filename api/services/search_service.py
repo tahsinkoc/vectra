@@ -21,6 +21,29 @@ from api.services.api_key_service import confirm_api_key
 #     result["distance"] = float(distances[0])
 #     return result
 
+# async def search_vector(vector: SearchVector, Request: Request):
+
+#     header = Request.headers.get("API-Key")
+#     confirm = confirm_api_key(header)
+#     if confirm:
+#         embedding = create_embedding(vector.metadata)
+#         labels, distances = search_index(embedding.tolist(), 3)
+
+#         label_ids = [int(label) for label in labels]
+#         distance_map = {int(label): float(distance) for label, distance in zip(labels, distances)}
+
+#         results = list(db.trips.find({"id": {"$in": label_ids}}, {"_id": 0}))
+
+#         if not results:
+#             raise HTTPException(status_code=404, detail="Trips not found in database.")
+
+#         for result in results:
+#             result["distance"] = distance_map.get(result["id"], None)
+
+#         results.sort(key=lambda r: r["distance"])
+
+#         return results
+
 async def search_vector(vector: SearchVector, Request: Request):
 
     header = Request.headers.get("API-Key")
@@ -32,13 +55,13 @@ async def search_vector(vector: SearchVector, Request: Request):
         label_ids = [int(label) for label in labels]
         distance_map = {int(label): float(distance) for label, distance in zip(labels, distances)}
 
-        results = list(db.trips.find({"id": {"$in": label_ids}}, {"_id": 0}))
+        results = list(db["test-sales-records"].find({"Order ID": {"$in": label_ids}}, {"_id": 0}))
 
         if not results:
             raise HTTPException(status_code=404, detail="Trips not found in database.")
 
         for result in results:
-            result["distance"] = distance_map.get(result["id"], None)
+            result["distance"] = distance_map.get(result["Order ID"], None)
 
         results.sort(key=lambda r: r["distance"])
 

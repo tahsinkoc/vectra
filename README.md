@@ -34,7 +34,7 @@ Traditional queries struggle with meaning.
 Example:
 
 > **Query:**
-> `"Saatlik ücreti 13 dolardan düşük olmayan"`
+> `"Hourly wage not less than $13"`
 
 With classic SQL, this requires rigid filters and predefined conditions.
 With Vectra, the same query is converted into a vector and matched semantically against stored data, returning the correct results **without explicit field-based filtering**.
